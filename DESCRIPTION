@@ -1,0 +1,24 @@
+Package: BayesMuCoSoT
+Type: Package
+Title: Multivariate Bayesian Modeling for Common Source Testing
+Version: 1.1.1
+Authors@R: c(person(given = "Lampis",
+           family = "Tzai", 
+           role = c("aut", "cre"),
+           email="lampi.tzai@gmail.com",
+           comment = c(ORCID = ""))
+           )
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 4.2.0)
+    JAGS Bayesian software https://sourceforge.net/projects/mcmc-jags/ 
+Imports:
+    LaplacesDemon
+    CholWishart
+    abind
+    R2jags

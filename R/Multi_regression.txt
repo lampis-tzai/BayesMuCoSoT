@@ -1,0 +1,15 @@
+model
+    {
+
+    for ( n in 1:N ) {
+
+    y[n,1:P] ~ dmnorm(x_pred[n,1:L] %*% beta[1:L,1:P]  ,W.inv[1:P,1:P]);
+    }
+
+    ### Define the priors
+    W.inv[1:P,1:P] ~ dwish(U[1:P,1:P], nw);
+    W[1:P,1:P] = inverse(W.inv[1:P,1:P]);
+    for (l in 1:L){
+    beta[l,1:P]~ dmnorm(beta_mu[l,1:P], inverse(beta_cov[1:P,1:P,l]));
+    }
+    }

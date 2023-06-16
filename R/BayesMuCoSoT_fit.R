@@ -1,0 +1,179 @@
+
+#' Title Bayesian Multivariate Normal Modelling for Common Source Testing Fit
+#'
+#' @param y Vector of response columns names (p=variables).
+#' @param x Predictors columns names (d=predictors). If there are any.
+#' @param questioned_data Data frame with the unknown data.
+#' @param known_data Data frame of the known data.
+#' @param background_data Background data frame to estimate the prior parameters.
+#' Background data recommended.
+#' @param background_data_id Column name of the background data frame for
+#' discriminate the data per id.
+#' @param approach "Conjugate" or "independent prior" approach.
+#' Default "independent prior"
+#' @param BayesFactor_Approximation "Laplace-Metropolis" or
+#' "Generalized Harmonic Mean" or "Bridge Sampling". Default "Bridge Sampling".
+#'  For the conjugate approach the Bayes factor comes in close form.
+#' @param prior_elicitation "Non-Informative" or "Maximum Likelihood"
+#' or list of type list(U= the inverse Wishart's scale matrix p by p,
+#' beta_mu= matrix mean of the matrix Normal d by P,
+#' beta_cov= d covariances matrix (3D matrix p by p by d).
+#' Default "Maximum Likelihood" estimations from the Background data.
+#' @param DoF Degrees of freedom for the prior inverse Wishart distribution. Default "min": p+2
+#'
+#' @return the logarithmic Bayes factor
+#' @export
+#'
+#' @examples
+#'
+#'
+library(R2jags)
+BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
+                             background_data = NA, background_data_id = NA,
+                             approach = "independent prior",
+                             BayesFactor_Approximation = "Bridge Sampling",
+                             prior_elicitation = "Maximum Likelihood",
+                             DoF = "min"){
+
+  all_together = rbind(questioned_data, known_data)
+  p = length(y)
+  l = length(x)
+  nw_hat = p + 2
+
+  background_y = as.matrix(background_data[,y])
+  background_x = as.matrix(background_data[,x])
+
+  beta = inv(t(background_x) %*% background_x) %*% t(background_x) %*% background_y
+
+  cov_beta = array(0, dim=c(p,p,l))
+  S_w = 0
+  for (w in unique(background_data[,background_data_id])){
+    df_id = background_data[(background_data[,background_data_id]==w),]
+
+    bid_x = as.matrix(df_id[,x])
+
+    bid_y =  as.matrix(df_id[,y])
+
+    beta_w = inv(t(bid_x) %*% bid_x) %*% t(bid_x) %*% bid_y
+
+    for (l_id in 1:l){
+      S.this <- (beta_w[l_id,] - beta[l_id,]) %*% t(beta_w[l_id,] - beta[l_id,])
+      cov_beta[,,l_id] <- cov_beta[,,l_id] + S.this
+    }
+
+    res = bid_y - bid_x %*% beta_w
+    Cov.this = (t(res) %*% res)/(nrow(df_id)-l)
+    S_w = S_w + Cov.this
+  }
+
+  beta_cov_all = cov_beta/(length(unique(background_data[,background_data_id])) - 1)
+  W_hat <- S_w/length(unique(background_data[,background_data_id]))
+  U_hat <- W_hat * (nw_hat - p - 1)
+
+
+  jags_data_H0 <- list(
+    "P" = p,
+    "L" = l,
+    "N" = nrow(all_together),
+    "x_pred" =  unname(as.matrix(all_together[,x])),
+    "y" = unname(as.matrix(all_together[,y])),
+    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "nw" = nw_hat,
+    "beta_mu"=beta,#array(0,c(4,9)),
+    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+  )
+
+
+  jags_data_H1_1 <- list(
+    "P" = p,
+    "L" = l,
+    "N" = nrow(questioned_data),
+    "x_pred" =  unname(as.matrix(questioned_data[,x])),
+    "y" = unname(as.matrix(questioned_data[,y])),
+    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "nw" = nw_hat,
+    "beta_mu"=beta,#array(0,c(4,9)),
+    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+  )
+
+
+  jags_data_H1_2 <- list(
+    "P" = p,
+    "L" = l,
+    "N" = nrow(known_data),
+    "x_pred" =  unname(as.matrix(known_data[,x])),
+    "y" = unname(as.matrix(known_data[,y])),
+    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "nw" = nw_hat,
+    "beta_mu"=beta,#array(0,c(4,9)),
+    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+  )
+
+
+  params <- c("beta", "W")
+
+  samps_H0 <- jags(jags_data_H0, parameters.to.save = params,
+                   model.file =  "Multi_regression.txt",
+                   n.chains = 1, n.iter = 6000,
+                   n.burnin = 3000, n.thin = 1)
+
+  samps_H1_1 <- jags(jags_data_H1_1, parameters.to.save = params,
+                     model.file =  "Multi_regression.txt",
+                     n.chains = 1, n.iter = 6000,
+                     n.burnin = 3000, n.thin = 1)
+
+
+  samps_H1_2 <- jags(jags_data_H1_2, parameters.to.save = params,
+                     model.file =  "Multi_regression.txt",
+                     n.chains = 1, n.iter = 6000,
+                     n.burnin = 3000, n.thin = 1)
+
+
+  source("Marg_Lik_functions.R")
+
+
+  conjugate_lik_H0 = marginal_likelihood_conjugate(jags_data_H0)
+  conjugate_lik_H1_1 = marginal_likelihood_conjugate(jags_data_H1_1)
+  conjugate_lik_H1_2 = marginal_likelihood_conjugate(jags_data_H1_2)
+
+  conjugate_logbf = conjugate_lik_H0-conjugate_lik_H1_1-conjugate_lik_H1_2
+
+
+
+  laplace_lik_H0 = marginal_likelihood_laplace_metr(samps_H0$BUGSoutput$sims.matrix,
+                                                    jags_data_H0)
+
+  laplace_lik_H1_1 = marginal_likelihood_laplace_metr(samps_H1_1$BUGSoutput$sims.matrix,
+                                                      jags_data_H1_1)
+
+  laplace_lik_H1_2 = marginal_likelihood_laplace_metr(samps_H1_2$BUGSoutput$sims.matrix,
+                                                      jags_data_H1_2)
+
+  laplace_logbf = laplace_lik_H0-laplace_lik_H1_1-laplace_lik_H1_2
+
+
+
+  ghm_lik_H0 = ml_generalized_harmonic_mean(samps_H0$BUGSoutput$sims.matrix,
+                                            jags_data_H0)
+  ghm_lik_H1_1 = ml_generalized_harmonic_mean(samps_H1_1$BUGSoutput$sims.matrix,
+                                              jags_data_H1_1)
+  ghm_lik_H1_2 = ml_generalized_harmonic_mean(samps_H1_2$BUGSoutput$sims.matrix,
+                                              jags_data_H1_2)
+
+
+  ghm_logbf = ghm_lik_H0-ghm_lik_H1_1-ghm_lik_H1_2
+
+
+
+  bs_lik_H0 = ml_bridge_sampling(samps_H0$BUGSoutput$sims.matrix,
+                                 jags_data_H0)
+  bs_lik_H1_1 = ml_bridge_sampling(samps_H1_1$BUGSoutput$sims.matrix,
+                                   jags_data_H1_1)
+  bs_lik_H1_2 = ml_bridge_sampling(samps_H1_2$BUGSoutput$sims.matrix,
+                                   jags_data_H1_2)
+
+  bs_logbf = bs_lik_H0-bs_lik_H1_1-bs_lik_H1_2
+
+
+  return(logbf)
+}
