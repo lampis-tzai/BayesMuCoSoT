@@ -1,4 +1,4 @@
-setwd("C:/Users/ltzai/Desktop/PhD/BayesMuCoSoT/R")
+setwd("C:/Users/ltzai/Desktop/PhD/BayesMuCoSoT")
 library(readxl)
 library(dplyr)
 library(MASS)
@@ -54,3 +54,6 @@ x = c( "Lettre_1","Lettre_2","Lettre_3","Lettre_4")
 background_data_id = "N"
 
 known_data = suspect_data
+
+devtools::load_all()
+BayesMuCoSoT_fit(y,x,questioned_data,known_data,background_data,background_data_id)

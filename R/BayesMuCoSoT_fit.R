@@ -1,5 +1,6 @@
+library(R2jags)
 
-#' Title Bayesian Multivariate Normal Modelling for Common Source Testing Fit
+#' Bayesian Multivariate Normal Modelling for Common Source Testing
 #'
 #' @param y Vector of response columns names (p=variables).
 #' @param x Predictors columns names (d=predictors). If there are any.
@@ -16,18 +17,13 @@
 #'  For the conjugate approach the Bayes factor comes in close form.
 #' @param prior_elicitation "Non-Informative" or "Maximum Likelihood"
 #' or list of type list(U= the inverse Wishart's scale matrix p by p,
-#' beta_mu= matrix mean of the matrix Normal d by P,
+#' beta_mu= matrix mean of the matrix Normal d by p,
 #' beta_cov= d covariances matrix (3D matrix p by p by d).
 #' Default "Maximum Likelihood" estimations from the Background data.
-#' @param DoF Degrees of freedom for the prior inverse Wishart distribution. Default "min": p+2
-#'
+#' @param DoF Degrees of freedom for the prior inverse Wishart distribution.
+#' Default "min": p+2. Otherwise, integer bigger than p+2
 #' @return the logarithmic Bayes factor
 #' @export
-#'
-#' @examples
-#'
-#'
-library(R2jags)
 BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                              background_data = NA, background_data_id = NA,
                              approach = "independent prior",
@@ -35,40 +31,75 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                              prior_elicitation = "Maximum Likelihood",
                              DoF = "min"){
 
+  if (!length(x)>1){
+    x = 'x'
+    questioned_data['x'] = known_data['x'] = 1
+    if (length(background_data)>1){
+      background_data['x'] = 1
+    }
+  }
+
+  if (!length(background_data)>1){
+    prior_elicitation = "Non-Informative"
+  } else if (length(background_data)>1 & is.na(background_data_id)){
+    print("To use background data for the prior elicitation we need a column id (at least 2 ids)")
+    stop()
+  }
+
   all_together = rbind(questioned_data, known_data)
   p = length(y)
   l = length(x)
-  nw_hat = p + 2
 
-  background_y = as.matrix(background_data[,y])
-  background_x = as.matrix(background_data[,x])
+  if (DoF=="min"){
+    nw_hat = p + 2
+  } else if(is.integer(DoF) & DoF>=p + 2){
+      nw_hat = DoF
+  }else {print("DoF must be an integer and bigger than p+1")
+        stop()}
 
-  beta = inv(t(background_x) %*% background_x) %*% t(background_x) %*% background_y
 
-  cov_beta = array(0, dim=c(p,p,l))
-  S_w = 0
-  for (w in unique(background_data[,background_data_id])){
-    df_id = background_data[(background_data[,background_data_id]==w),]
+  if (prior_elicitation == "Maximum Likelihood"){
+    background_y = as.matrix(background_data[,y])
+    background_x = as.matrix(background_data[,x])
 
-    bid_x = as.matrix(df_id[,x])
+    beta = solve(t(background_x) %*% background_x) %*% t(background_x) %*% background_y
 
-    bid_y =  as.matrix(df_id[,y])
+    cov_beta = array(0, dim=c(p,p,l))
+    S_w = 0
+    for (w in unique(background_data[,background_data_id])){
+      df_id = background_data[(background_data[,background_data_id]==w),]
 
-    beta_w = inv(t(bid_x) %*% bid_x) %*% t(bid_x) %*% bid_y
+      bid_x = as.matrix(df_id[,x])
 
-    for (l_id in 1:l){
-      S.this <- (beta_w[l_id,] - beta[l_id,]) %*% t(beta_w[l_id,] - beta[l_id,])
-      cov_beta[,,l_id] <- cov_beta[,,l_id] + S.this
+      bid_y =  as.matrix(df_id[,y])
+
+      beta_w = solve(t(bid_x) %*% bid_x) %*% t(bid_x) %*% bid_y
+
+      for (l_id in 1:l){
+        S.this <- (beta_w[l_id,] - beta[l_id,]) %*% t(beta_w[l_id,] - beta[l_id,])
+        cov_beta[,,l_id] <- cov_beta[,,l_id] + S.this
+      }
+
+      res = bid_y - bid_x %*% beta_w
+      Cov.this = (t(res) %*% res)/(nrow(df_id)-l)
+      S_w = S_w + Cov.this
     }
 
-    res = bid_y - bid_x %*% beta_w
-    Cov.this = (t(res) %*% res)/(nrow(df_id)-l)
-    S_w = S_w + Cov.this
-  }
+    beta_cov_all = cov_beta/(length(unique(background_data[,background_data_id])) - 1)
+    W_hat <- S_w/length(unique(background_data[,background_data_id]))
+    U_hat <- W_hat * (nw_hat - p - 1)
 
-  beta_cov_all = cov_beta/(length(unique(background_data[,background_data_id])) - 1)
-  W_hat <- S_w/length(unique(background_data[,background_data_id]))
-  U_hat <- W_hat * (nw_hat - p - 1)
+  }else if (prior_elicitation == "Non-Informative"){
+    U_hat = diag(5,p)
+    beta = array(0,c(l,p))
+    beta_cov_all = array(rep(diag(5,p),l), dim =c(p,p,l))
+  } else{
+    U_hat = prior_elicitation$U
+    beta = prior_elicitation$beta_mu
+    beta_cov_all = prior_elicitation$beta_cov
+    }
+
+
 
 
   jags_data_H0 <- list(
@@ -77,10 +108,10 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     "N" = nrow(all_together),
     "x_pred" =  unname(as.matrix(all_together[,x])),
     "y" = unname(as.matrix(all_together[,y])),
-    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "U"= as.matrix(unname(U_hat)),
     "nw" = nw_hat,
-    "beta_mu"=beta,#array(0,c(4,9)),
-    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+    "beta_mu" = beta,
+    "beta_cov" = beta_cov_all
   )
 
 
@@ -90,10 +121,10 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     "N" = nrow(questioned_data),
     "x_pred" =  unname(as.matrix(questioned_data[,x])),
     "y" = unname(as.matrix(questioned_data[,y])),
-    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "U"= as.matrix(unname(U_hat)),
     "nw" = nw_hat,
-    "beta_mu"=beta,#array(0,c(4,9)),
-    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+    "beta_mu"=beta,
+    "beta_cov"=beta_cov_all
   )
 
 
@@ -103,77 +134,120 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     "N" = nrow(known_data),
     "x_pred" =  unname(as.matrix(known_data[,x])),
     "y" = unname(as.matrix(known_data[,y])),
-    "U"= as.matrix(unname(U_hat)),#diag(5,p),
+    "U"= as.matrix(unname(U_hat)),
     "nw" = nw_hat,
-    "beta_mu"=beta,#array(0,c(4,9)),
-    "beta_cov"=beta_cov_all #abind(list(diag(5,p),diag(5,p),diag(5,p),diag(5,p)), along = 3)
+    "beta_mu"=beta,
+    "beta_cov"=beta_cov_all
   )
 
+  if (approach == "independent prior"){
+    params <- c("beta", "W")
 
-  params <- c("beta", "W")
+    if (l>1){
+    model.string <-"
+     model
+    {
 
-  samps_H0 <- jags(jags_data_H0, parameters.to.save = params,
-                   model.file =  "Multi_regression.txt",
-                   n.chains = 1, n.iter = 6000,
-                   n.burnin = 3000, n.thin = 1)
+    for ( n in 1:N ) {
 
-  samps_H1_1 <- jags(jags_data_H1_1, parameters.to.save = params,
-                     model.file =  "Multi_regression.txt",
+    y[n,1:P] ~ dmnorm(x_pred[n,1:L]%*%beta[1:L,1:P],W.inv[1:P,1:P]);
+    }
+
+    ### Define the priors
+    W.inv[1:P,1:P] ~ dwish(U[1:P,1:P], nw);
+    W[1:P,1:P] = inverse(W.inv[1:P,1:P]);
+    for (l in 1:L){
+    beta[l,1:P]~ dmnorm(beta_mu[l,1:P], inverse(beta_cov[1:P,1:P,l]));
+    }
+    }
+    "
+    }else {
+      model.string <-"
+     model
+    {
+
+    for ( n in 1:N ) {
+
+    y[n,1:P] ~ dmnorm(x_pred[n,1:L]*beta[1:L,1:P],W.inv[1:P,1:P]);
+    }
+
+    ### Define the priors
+    W.inv[1:P,1:P] ~ dwish(U[1:P,1:P], nw);
+    W[1:P,1:P] = inverse(W.inv[1:P,1:P]);
+    for (l in 1:L){
+    beta[l,1:P]~ dmnorm(beta_mu[l,1:P], inverse(beta_cov[1:P,1:P,l]));
+    }
+    }
+    "
+    }
+
+    samps_H0 <- jags(jags_data_H0, parameters.to.save = params,
+                     model.file =  textConnection(model.string),
                      n.chains = 1, n.iter = 6000,
                      n.burnin = 3000, n.thin = 1)
 
-
-  samps_H1_2 <- jags(jags_data_H1_2, parameters.to.save = params,
-                     model.file =  "Multi_regression.txt",
-                     n.chains = 1, n.iter = 6000,
-                     n.burnin = 3000, n.thin = 1)
-
-
-  source("Marg_Lik_functions.R")
+    samps_H1_1 <- jags(jags_data_H1_1, parameters.to.save = params,
+                       model.file =  textConnection(model.string),
+                       n.chains = 1, n.iter = 6000,
+                       n.burnin = 3000, n.thin = 1)
 
 
-  conjugate_lik_H0 = marginal_likelihood_conjugate(jags_data_H0)
-  conjugate_lik_H1_1 = marginal_likelihood_conjugate(jags_data_H1_1)
-  conjugate_lik_H1_2 = marginal_likelihood_conjugate(jags_data_H1_2)
+    samps_H1_2 <- jags(jags_data_H1_2, parameters.to.save = params,
+                       model.file =  textConnection(model.string),
+                       n.chains = 1, n.iter = 6000,
+                       n.burnin = 3000, n.thin = 1)
 
-  conjugate_logbf = conjugate_lik_H0-conjugate_lik_H1_1-conjugate_lik_H1_2
+    if (BayesFactor_Approximation == "Laplace-Metropolis"){
+      laplace_lik_H0 = marginal_likelihood_laplace_metr(samps_H0$BUGSoutput$sims.matrix,
+                                                        jags_data_H0)
+
+      laplace_lik_H1_1 = marginal_likelihood_laplace_metr(samps_H1_1$BUGSoutput$sims.matrix,
+                                                          jags_data_H1_1)
+
+      laplace_lik_H1_2 = marginal_likelihood_laplace_metr(samps_H1_2$BUGSoutput$sims.matrix,
+                                                          jags_data_H1_2)
+
+      laplace_logbf = laplace_lik_H0-laplace_lik_H1_1-laplace_lik_H1_2
+
+      return(laplace_logbf)
+
+    } else if (BayesFactor_Approximation == "Generalized Harmonic Mean"){
+      ghm_lik_H0 = ml_generalized_harmonic_mean(samps_H0$BUGSoutput$sims.matrix,
+                                                jags_data_H0)
+      ghm_lik_H1_1 = ml_generalized_harmonic_mean(samps_H1_1$BUGSoutput$sims.matrix,
+                                                  jags_data_H1_1)
+      ghm_lik_H1_2 = ml_generalized_harmonic_mean(samps_H1_2$BUGSoutput$sims.matrix,
+                                                  jags_data_H1_2)
+
+      ghm_logbf = ghm_lik_H0-ghm_lik_H1_1-ghm_lik_H1_2
+
+      return(ghm_logbf)
+    } else if (BayesFactor_Approximation == "Bridge Sampling"){
+
+      bs_lik_H0 = ml_bridge_sampling(samps_H0$BUGSoutput$sims.matrix,
+                                     jags_data_H0)
+      bs_lik_H1_1 = ml_bridge_sampling(samps_H1_1$BUGSoutput$sims.matrix,
+                                       jags_data_H1_1)
+      bs_lik_H1_2 = ml_bridge_sampling(samps_H1_2$BUGSoutput$sims.matrix,
+                                       jags_data_H1_2)
+
+      bs_logbf = bs_lik_H0-bs_lik_H1_1-bs_lik_H1_2
+      return(bs_logbf)
+    } else {
+      return("Not right Bayes factor approximation")
+      }
 
 
+  }else if (approach == "Conjugate"){
+    conjugate_lik_H0 = marginal_likelihood_conjugate(jags_data_H0)
+    conjugate_lik_H1_1 = marginal_likelihood_conjugate(jags_data_H1_1)
+    conjugate_lik_H1_2 = marginal_likelihood_conjugate(jags_data_H1_2)
 
-  laplace_lik_H0 = marginal_likelihood_laplace_metr(samps_H0$BUGSoutput$sims.matrix,
-                                                    jags_data_H0)
+    conjugate_logbf = conjugate_lik_H0-conjugate_lik_H1_1-conjugate_lik_H1_2
+    return(conjugate_logbf)
+  } else{
+    return("Not right approach")
+    }
 
-  laplace_lik_H1_1 = marginal_likelihood_laplace_metr(samps_H1_1$BUGSoutput$sims.matrix,
-                                                      jags_data_H1_1)
-
-  laplace_lik_H1_2 = marginal_likelihood_laplace_metr(samps_H1_2$BUGSoutput$sims.matrix,
-                                                      jags_data_H1_2)
-
-  laplace_logbf = laplace_lik_H0-laplace_lik_H1_1-laplace_lik_H1_2
-
-
-
-  ghm_lik_H0 = ml_generalized_harmonic_mean(samps_H0$BUGSoutput$sims.matrix,
-                                            jags_data_H0)
-  ghm_lik_H1_1 = ml_generalized_harmonic_mean(samps_H1_1$BUGSoutput$sims.matrix,
-                                              jags_data_H1_1)
-  ghm_lik_H1_2 = ml_generalized_harmonic_mean(samps_H1_2$BUGSoutput$sims.matrix,
-                                              jags_data_H1_2)
-
-
-  ghm_logbf = ghm_lik_H0-ghm_lik_H1_1-ghm_lik_H1_2
-
-
-
-  bs_lik_H0 = ml_bridge_sampling(samps_H0$BUGSoutput$sims.matrix,
-                                 jags_data_H0)
-  bs_lik_H1_1 = ml_bridge_sampling(samps_H1_1$BUGSoutput$sims.matrix,
-                                   jags_data_H1_1)
-  bs_lik_H1_2 = ml_bridge_sampling(samps_H1_2$BUGSoutput$sims.matrix,
-                                   jags_data_H1_2)
-
-  bs_logbf = bs_lik_H0-bs_lik_H1_1-bs_lik_H1_2
-
-
-  return(logbf)
 }
+

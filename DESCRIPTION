@@ -8,17 +8,17 @@ Authors@R: c(person(given = "Lampis",
            email="lampi.tzai@gmail.com",
            comment = c(ORCID = ""))
            )
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for common source testing. This library can help you to test if two multivariate data distribution comes from the same source based on logarithmic Bayes factor. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
+Details: To run you have to install Jags Bayesian software from https://sourceforge.net/projects/mcmc-jags/
 Depends: 
     R (>= 4.2.0)
-    JAGS Bayesian software https://sourceforge.net/projects/mcmc-jags/ 
-Imports:
-    LaplacesDemon
-    CholWishart
-    abind
-    R2jags
+Imports: 
+  abind (>= 1.4), 
+  CholWishart (>= 1.1.2), 
+  LaplacesDemon (>= 16.1.6), 
+  matlib (>= 0.9.6),
+  R2jags (>= 0.7-1)
