@@ -35,7 +35,6 @@ adoq_data['Lettre_1']=1
 
 writer_data = adoq_data[(adoq_data$N==1),]
 background_data = adoq_data[(adoq_data$N!=1),]
-#background_data = adoq_data[(adoq_data$N %in% c(6,7,8)),]
 
 questioned_data = data.frame()
 suspect_data = data.frame()
@@ -49,6 +48,36 @@ for (c in 1:4){
   suspect_data = rbind(suspect_data, writer_data_c[-suspect_ind, ])
 }
 
+##################### Different writers ########################
+
+#questioned_data = adoq_data[(adoq_data$N == 7),]
+
+#suspect_data = adoq_data[(adoq_data$N == 8),]
+
+#background_data = adoq_data[!(adoq_data$N %in% c(7,8)),]
+
+writer_data_1 = adoq_data[(adoq_data$N == 1),]
+
+writer_data_2 = adoq_data[(adoq_data$N == 4),]
+
+background_data = adoq_data[!(adoq_data$N %in% c(1,4)),]
+
+questioned_data = data.frame()
+suspect_data = data.frame()
+for (c in 1:4){
+  writer_data_1_c = writer_data_1[(writer_data_1$Lettre==c),]
+  random_percentage1 = runif(1,0.35,0.65)
+  smp_size <- round(random_percentage1 * nrow(writer_data_1_c))
+  ind <- sample(seq_len(nrow(writer_data_1_c)), size = smp_size)
+  questioned_data = rbind(questioned_data,writer_data_1_c[ind, ])
+
+  writer_data_2_c = writer_data_2[(writer_data_2$Lettre==c),]
+  smp_size <- round((1-random_percentage1) * nrow(writer_data_2_c))
+  ind <- sample(seq_len(nrow(writer_data_2_c)), size = smp_size)
+  print(dim(writer_data_2_c[ind, ]))
+  suspect_data = rbind(suspect_data,writer_data_2_c[ind, ])
+}
+
 y = c("Surface","a_1","b_1","a_2","b_2","a_3","b_3","a_4","b_4")
 x = c( "Lettre_1","Lettre_2","Lettre_3","Lettre_4")
 background_data_id = "N"
@@ -56,6 +85,7 @@ background_data_id = "N"
 known_data = suspect_data
 
 devtools::load_all()
-BayesMuCoSoT_fit(y,x,questioned_data,known_data,
+BayesMuCoSoT_fit(y,x=NA,questioned_data,known_data,
                  background_data,background_data_id,
                  approach = "independent prior")
+
