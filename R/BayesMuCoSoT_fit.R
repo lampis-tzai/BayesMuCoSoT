@@ -10,7 +10,7 @@ library(R2jags)
 #' Background data recommended.
 #' @param background_data_id Column name of the background data frame for
 #' discriminate the data per id.
-#' @param approach "Conjugate" or "independent prior" approach.
+#' @param approach "conjugate" or "independent prior" approach.
 #' Default "independent prior"
 #' @param BayesFactor_Approximation "Laplace-Metropolis" or
 #' "Generalized Harmonic Mean" or "Bridge Sampling". Default "Bridge Sampling".
@@ -21,7 +21,9 @@ library(R2jags)
 #' beta_cov= d covariances matrix (3D matrix p by p by d).
 #' Default "Maximum Likelihood" estimations from the Background data.
 #' @param DoF Degrees of freedom for the prior inverse Wishart distribution.
-#' Default "min": p+2. Otherwise, integer bigger than p+2
+#' Default "min": p+2. Otherwise, integer bigger than p+2.
+#' @param verbose messages while running. Default TRUE.
+#' @param ... the other arguments of jags {R2jags} function.
 #' @return the logarithmic Bayes factor
 #' @export
 BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
@@ -29,7 +31,16 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                              approach = "independent prior",
                              BayesFactor_Approximation = "Bridge Sampling",
                              prior_elicitation = "Maximum Likelihood",
-                             DoF = "min"){
+                             DoF = "min", verbose = TRUE, ...){
+
+
+  if (!length(background_data)>1){
+    prior_elicitation = "Non-Informative"
+  } else if (length(background_data)>1 & is.na(background_data_id)){
+    print("To use background data for the prior elicitation we need a column id (at least 2 ids)")
+    stop()
+  }
+
 
   if (!length(x)>1){
     x = 'x'
@@ -39,12 +50,6 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     }
   }
 
-  if (!length(background_data)>1){
-    prior_elicitation = "Non-Informative"
-  } else if (length(background_data)>1 & is.na(background_data_id)){
-    print("To use background data for the prior elicitation we need a column id (at least 2 ids)")
-    stop()
-  }
 
   all_together = rbind(questioned_data, known_data)
   p = length(y)
@@ -181,21 +186,31 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     "
     }
 
+    if (verbose){
+      print("Prior elicitation finished")
+      bar = "text"
+    }else{
+      bar = "none"
+      }
+
+    if (verbose){print("Sampling from posterior considering common modeling per source")}
+
     samps_H0 <- jags(jags_data_H0, parameters.to.save = params,
                      model.file =  textConnection(model.string),
-                     n.chains = 1, n.iter = 6000,
-                     n.burnin = 3000, n.thin = 1)
+                     progress.bar = bar,quiet = TRUE, ...)
+
+    if (verbose){print("Sampling from posterior considering different modeling per source")}
 
     samps_H1_1 <- jags(jags_data_H1_1, parameters.to.save = params,
                        model.file =  textConnection(model.string),
-                       n.chains = 1, n.iter = 6000,
-                       n.burnin = 3000, n.thin = 1)
+                       progress.bar = bar,quiet = TRUE, ...)
 
 
     samps_H1_2 <- jags(jags_data_H1_2, parameters.to.save = params,
                        model.file =  textConnection(model.string),
-                       n.chains = 1, n.iter = 6000,
-                       n.burnin = 3000, n.thin = 1)
+                       progress.bar = bar,quiet = TRUE, ...)
+
+    if (verbose){print("Calculating Bayes factor")}
 
     if (BayesFactor_Approximation == "Laplace-Metropolis"){
       laplace_lik_H0 = marginal_likelihood_laplace_metr(samps_H0$BUGSoutput$sims.matrix,
@@ -238,7 +253,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
       }
 
 
-  }else if (approach == "Conjugate"){
+  }else if (approach == "conjugate"){
     conjugate_lik_H0 = marginal_likelihood_conjugate(jags_data_H0)
     conjugate_lik_H1_1 = marginal_likelihood_conjugate(jags_data_H1_1)
     conjugate_lik_H1_2 = marginal_likelihood_conjugate(jags_data_H1_2)

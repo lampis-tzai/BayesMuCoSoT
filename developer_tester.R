@@ -56,4 +56,6 @@ background_data_id = "N"
 known_data = suspect_data
 
 devtools::load_all()
-BayesMuCoSoT_fit(y,x,questioned_data,known_data,background_data,background_data_id)
+BayesMuCoSoT_fit(y,x,questioned_data,known_data,
+                 background_data,background_data_id,
+                 approach = "independent prior")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BayesMuCoSoT_fit.R
 \name{BayesMuCoSoT_fit}
 \alias{BayesMuCoSoT_fit}
-\title{Bayesian Multivariate Normal Modelling for Common Source Testing Fit}
+\title{Bayesian Multivariate Normal Modelling for Common Source Testing}
 \usage{
 BayesMuCoSoT_fit(
   y,
@@ -14,7 +14,9 @@ BayesMuCoSoT_fit(
   approach = "independent prior",
   BayesFactor_Approximation = "Bridge Sampling",
   prior_elicitation = "Maximum Likelihood",
-  DoF = "min"
+  DoF = "min",
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -32,7 +34,7 @@ Background data recommended.}
 \item{background_data_id}{Column name of the background data frame for
 discriminate the data per id.}
 
-\item{approach}{"Conjugate" or "independent prior" approach.
+\item{approach}{"conjugate" or "independent prior" approach.
 Default "independent prior"}
 
 \item{BayesFactor_Approximation}{"Laplace-Metropolis" or
@@ -41,16 +43,20 @@ Default "independent prior"}
 
 \item{prior_elicitation}{"Non-Informative" or "Maximum Likelihood"
 or list of type list(U= the inverse Wishart's scale matrix p by p,
-beta_mu= matrix mean of the matrix Normal d by P,
+beta_mu= matrix mean of the matrix Normal d by p,
 beta_cov= d covariances matrix (3D matrix p by p by d).
 Default "Maximum Likelihood" estimations from the Background data.}
 
 \item{DoF}{Degrees of freedom for the prior inverse Wishart distribution.
-Default "min": p+2. Otherwise, integer bigger than p+2}
+Default "min": p+2. Otherwise, integer bigger than p+2.}
+
+\item{verbose}{messages while running. Default TRUE.}
+
+\item{...}{the other arguments of jags {R2jags} function.}
 }
 \value{
 the logarithmic Bayes factor
 }
 \description{
-Bayesian Multivariate Normal Modelling for Common Source Testing Fit
+Bayesian Multivariate Normal Modelling for Common Source Testing
 }

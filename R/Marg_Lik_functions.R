@@ -24,7 +24,7 @@ marginal_likelihood_conjugate<- function(jags_data){
   vn = v0 + n
 
   kn = t(x) %*% x + k0
-  mn = inv(kn)%*%(t(x)%*%y + k0%*%m0)
+  mn = solve(kn)%*%(t(x)%*%y + k0%*%m0)
   Un = U0 + t(y) %*% y + t(m0)%*%k0%*%m0 - t(mn)%*%kn%*%mn
 
 
@@ -42,7 +42,7 @@ marginal_likelihood_conjugate<- function(jags_data){
 #'
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
-#' @return the marginal likelihood
+#' @return the logarithmic marginal likelihood
 #' @export
 marginal_likelihood_laplace_metr <- function(samples, jags_data){
 
@@ -101,12 +101,11 @@ marginal_likelihood_laplace_metr <- function(samples, jags_data){
 #'
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
-#' @return the marginal likelihood
+#' @return the logarithmic marginal likelihood
 #' @export
-ml_generalized_harmonic_mean <- function(samples, jags_data, N_mcmc = 3000) {
+ml_generalized_harmonic_mean <- function(samples, jags_data) {
 
   samples = as.data.frame(samples)
-  samples = as.data.frame(samples[sample(nrow(samples), N_mcmc), ])
 
   smp_size <- floor(0.5 * nrow(samples))
 
@@ -201,12 +200,11 @@ ml_generalized_harmonic_mean <- function(samples, jags_data, N_mcmc = 3000) {
 #'
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
-#' @return the marginal likelihood
+#' @return the logarithmic marginal likelihood
 #' @export
-ml_bridge_sampling <- function(samples, jags_data,N_mcmc = 2000) {
+ml_bridge_sampling <- function(samples, jags_data) {
 
   samples = as.data.frame(samples)
-  samples = as.data.frame(samples[sample(nrow(samples), N_mcmc), ])
 
   smp_size <- floor(0.5 * nrow(samples))
 
