@@ -5,7 +5,7 @@ Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for commo
 
 ## Installation
 
-```devtools::install_github()'''
+```devtools::install_github()```
 
 
 ## Documentation
