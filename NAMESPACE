@@ -1,1 +1,3 @@
 exportPattern("^[[:alpha:]]+")
+importFrom("stats", "cor", "cov", "median", "sd")
+importFrom("utils", "combn")

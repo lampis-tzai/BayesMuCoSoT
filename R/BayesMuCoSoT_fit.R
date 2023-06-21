@@ -1,5 +1,3 @@
-library(R2jags)
-
 #' Bayesian Multivariate Normal Modelling for Common Source Testing
 #'
 #' @param y Vector of response columns names (p=variables).
@@ -195,18 +193,18 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
 
     if (verbose){print("Sampling from posterior considering common modeling per source")}
 
-    samps_H0 <- jags(jags_data_H0, parameters.to.save = params,
+    samps_H0 <- R2jags::jags(jags_data_H0, parameters.to.save = params,
                      model.file =  textConnection(model.string),
                      progress.bar = bar,quiet = TRUE, ...)
 
     if (verbose){print("Sampling from posterior considering different modeling per source")}
 
-    samps_H1_1 <- jags(jags_data_H1_1, parameters.to.save = params,
+    samps_H1_1 <- R2jags::jags(jags_data_H1_1, parameters.to.save = params,
                        model.file =  textConnection(model.string),
                        progress.bar = bar,quiet = TRUE, ...)
 
 
-    samps_H1_2 <- jags(jags_data_H1_2, parameters.to.save = params,
+    samps_H1_2 <- R2jags::jags(jags_data_H1_2, parameters.to.save = params,
                        model.file =  textConnection(model.string),
                        progress.bar = bar,quiet = TRUE, ...)
 

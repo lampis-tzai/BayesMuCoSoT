@@ -19,6 +19,5 @@ Depends:
 Imports: 
   abind (>= 1.4), 
   CholWishart (>= 1.1.2), 
-  LaplacesDemon (>= 16.1.6), 
-  matlib (>= 0.9.6),
+  LaplacesDemon (>= 16.1.6),
   R2jags (>= 0.7-1)

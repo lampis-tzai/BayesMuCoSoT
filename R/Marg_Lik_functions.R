@@ -1,9 +1,3 @@
-library(abind)
-library(CholWishart)
-library(LaplacesDemon)
-library(matlib)
-
-
 #' Conjugate Marginal Likelihood
 #'
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
@@ -32,7 +26,7 @@ marginal_likelihood_conjugate<- function(jags_data){
     (d/2)*determinant(kn,logarithm = TRUE)$modulus[1] +
     (v0/2)*determinant(U0/2,logarithm = TRUE)$modulus[1] -
     (vn/2)*determinant(Un/2,logarithm = TRUE)$modulus[1] +
-    lmvgamma(vn/2, d) - lmvgamma(v0/2, d)
+    CholWishart::lmvgamma(vn/2, d) - CholWishart::lmvgamma(v0/2, d)
 
   return(logml)
 
@@ -76,17 +70,17 @@ marginal_likelihood_laplace_metr <- function(samples, jags_data){
 
   par_cor = cor(samples_new)
 
-  likelihood = sum(dmvn(jags_data$y,  jags_data$x_pred %*% beta_mu_hat ,W_hat_post, log = TRUE))
+  likelihood = sum(LaplacesDemon::dmvn(jags_data$y,  jags_data$x_pred %*% beta_mu_hat ,W_hat_post, log = TRUE))
 
   prior_betas=c()
   for (l in 1:jags_data$L){
-    prior_beta_prob = dmvn(beta_mu_hat[l,], jags_data$beta_mu[l,],
+    prior_beta_prob = LaplacesDemon::dmvn(beta_mu_hat[l,], jags_data$beta_mu[l,],
                            jags_data$beta_cov[,,l], log = TRUE)
     prior_betas = c(prior_betas,prior_beta_prob)
   }
   prior_beta = sum(prior_betas)
 
-  prior_W = dinvwishart(W_hat_post,jags_data$nw, jags_data$U, log = TRUE)
+  prior_W = CholWishart::dInvWishart(W_hat_post,jags_data$nw, jags_data$U, log = TRUE)
 
 
   logml = (ncol(samples_new)/2)*log(2*pi) + (1/2)*determinant(par_cor,logarithm = TRUE)$modulus[1] +
@@ -144,29 +138,29 @@ ml_generalized_harmonic_mean <- function(samples, jags_data) {
   }
 
 
-  beta = abind(apply(beta_df,1,
+  beta = abind::abind(apply(beta_df,1,
                      function(x) t(matrix(x,nrow=jags_data$P,ncol=jags_data$L)),
                      simplify = FALSE), along=3)
 
-  W = abind(apply(data.matrix(samples_iter[,1:(jags_data$P*jags_data$P)]),1,
+  W = abind::abind(apply(data.matrix(samples_iter[,1:(jags_data$P*jags_data$P)]),1,
                   function(x) matrix(x,nrow=jags_data$P,ncol=jags_data$P),
                   simplify = FALSE), along=3)
 
 
   prior_betas = array(0, dim = c(N2,jags_data$L))
   for (l in 1:jags_data$L){
-    prior_beta_prob = dmvn(t(beta[l,,]),
+    prior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                            jags_data$beta_mu[l,],
                            jags_data$beta_cov[,,l], log = TRUE)
     prior_betas[,l] = prior_beta_prob
   }
   prior_beta = rowSums(prior_betas)
 
-  prior_W = dInvWishart(W,jags_data$nw, jags_data$U, log = TRUE)
+  prior_W = CholWishart::dInvWishart(W,jags_data$nw, jags_data$U, log = TRUE)
 
   posterior_betas = array(0, dim = c(N2,jags_data$L))
   for (l in 1:jags_data$L){
-    posterior_beta_prob = dmvn(t(beta[l,,]),
+    posterior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                                beta_mu_hat[l,],
                                beta_cov_hat[[l]],
                                log = TRUE)
@@ -175,12 +169,12 @@ ml_generalized_harmonic_mean <- function(samples, jags_data) {
   }
   posterior_beta = rowSums(posterior_betas)
 
-  posterior_W = dInvWishart(W,nw_post, U_post, log = TRUE)
+  posterior_W = CholWishart::dInvWishart(W,nw_post, U_post, log = TRUE)
 
   prob_list = numeric(nrow(samples_iter))
   for (i in 1:nrow(samples_iter)){
 
-    likelihood = sum(dmvn(jags_data$y, jags_data$x_pred %*% beta[,,i], W[,,i], log = TRUE))
+    likelihood = sum(LaplacesDemon::dmvn(jags_data$y, jags_data$x_pred %*% beta[,,i], W[,,i], log = TRUE))
 
     prob =  posterior_beta[i] + posterior_W[i] - likelihood -  prior_beta[i] -prior_W[i]
 
@@ -237,26 +231,27 @@ ml_bridge_sampling <- function(samples, jags_data) {
 
   beta <- array(0, dim=c(jags_data$L,jags_data$P,N1))
   for (l in 1:jags_data$L){
-    beta[l,,] = t(rmvn(N1,beta_mu_hat[l,],beta_cov_hat[[l]]))
+    beta[l,,] = t(LaplacesDemon::rmvn(N1,beta_mu_hat[l,],beta_cov_hat[[l]]))
   }
 
-  W = rInvWishart(N1,nw_post, U_post)
+  W = CholWishart::rInvWishart(N1,nw_post, U_post)
 
 
   prior_betas = array(0, dim = c(N1,jags_data$L))
   for (l in 1:jags_data$L){
-    prior_beta_prob = dmvn(t(beta[l,,]),
+    prior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                            jags_data$beta_mu[l,],
                            jags_data$beta_cov[,,l], log = TRUE)
     prior_betas[,l] = prior_beta_prob
   }
+
   prior_beta = rowSums(prior_betas)
 
-  prior_W = dInvWishart(W,jags_data$nw, jags_data$U, log=TRUE)
+  prior_W = CholWishart::dInvWishart(W,jags_data$nw, jags_data$U, log=TRUE)
 
   posterior_betas = array(0, dim = c(N1,jags_data$L))
   for (l in 1:jags_data$L){
-    posterior_beta_prob = dmvn(t(beta[l,,]),
+    posterior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                                beta_mu_hat[l,],
                                beta_cov_hat[[l]],
                                log = TRUE)
@@ -265,12 +260,12 @@ ml_bridge_sampling <- function(samples, jags_data) {
   }
   posterior_beta = rowSums(posterior_betas)
 
-  posterior_W = dInvWishart(W,nw_post, U_post, log=TRUE)
+  posterior_W = CholWishart::dInvWishart(W,nw_post, U_post, log=TRUE)
 
   l2 = numeric(N1)
   for (i in 1:N1){
 
-    likelihood = sum(dmvn(jags_data$y, jags_data$x_pred %*% beta[,,i],W[,,i], log = TRUE))
+    likelihood = sum(LaplacesDemon::dmvn(jags_data$y, jags_data$x_pred %*% beta[,,i],W[,,i], log = TRUE))
 
     l2_numer = likelihood + prior_beta[i] + prior_W[i]
 
@@ -286,28 +281,28 @@ ml_bridge_sampling <- function(samples, jags_data) {
   }
   }
 
-  beta = abind(apply(beta_df,1,
+  beta = abind::abind(apply(beta_df,1,
                      function(x) t(matrix(x,nrow=jags_data$P,ncol=jags_data$L)),
                      simplify = FALSE), along=3)
 
-  W = abind(apply(data.matrix(samples_iter[,1:(jags_data$P*jags_data$P)]),1,
+  W = abind::abind(apply(data.matrix(samples_iter[,1:(jags_data$P*jags_data$P)]),1,
                   function(x) matrix(x,nrow=jags_data$P,ncol=jags_data$P),
                   simplify = FALSE), along=3)
 
   prior_betas = array(0, dim = c(N2,(jags_data$L)))
   for (l in 1:jags_data$L){
-    prior_beta_prob = dmvn(t(beta[l,,]),
+    prior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                            jags_data$beta_mu[l,],
                            jags_data$beta_cov[,,l], log = TRUE)
     prior_betas[,l] = prior_beta_prob
   }
   prior_beta = rowSums(prior_betas)
 
-  prior_W = dInvWishart(W,jags_data$nw, jags_data$U, log = TRUE)
+  prior_W = CholWishart::dInvWishart(W,jags_data$nw, jags_data$U, log = TRUE)
 
   posterior_betas = array(0, dim = c(N2,jags_data$L))
   for (l in 1:jags_data$L){
-    posterior_beta_prob = dmvn(t(beta[l,,]),
+    posterior_beta_prob = LaplacesDemon::dmvn(t(beta[l,,]),
                                beta_mu_hat[l,],
                                beta_cov_hat[[l]],
                                log = TRUE)
@@ -316,12 +311,12 @@ ml_bridge_sampling <- function(samples, jags_data) {
   }
   posterior_beta = rowSums(posterior_betas)
 
-  posterior_W = dInvWishart(W,nw_post, U_post, log = TRUE)
+  posterior_W = CholWishart::dInvWishart(W,nw_post, U_post, log = TRUE)
 
   l1 = numeric(nrow(samples_iter))
   for (i in 1:nrow(samples_iter)){
 
-    likelihood = sum(dmvn(jags_data$y,  jags_data$x_pred %*% beta[,,i],W[,,i], log = TRUE))
+    likelihood = sum(LaplacesDemon::dmvn(jags_data$y,  jags_data$x_pred %*% beta[,,i],W[,,i], log = TRUE))
 
     l1_numer = likelihood  + prior_beta[i] + prior_W[i]
 
