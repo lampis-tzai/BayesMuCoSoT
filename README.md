@@ -7,7 +7,8 @@ Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for commo
 
 ```
 #install.packages("devtools")
-devtools::install_github('lampis-tzai/BayesMuCoSoT)```
+devtools::install_github('lampis-tzai/BayesMuCoSoT)
+```
 
 ## Documentation
 
