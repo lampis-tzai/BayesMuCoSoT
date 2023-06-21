@@ -18,6 +18,10 @@ Depends:
     R (>= 4.2.0)
 Imports: 
   abind (>= 1.4), 
+  Matrix (>= 1.5),
   CholWishart (>= 1.1.2), 
   LaplacesDemon (>= 16.1.6),
   R2jags (>= 0.7-1)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

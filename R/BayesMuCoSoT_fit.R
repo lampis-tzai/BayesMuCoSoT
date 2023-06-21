@@ -89,6 +89,11 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     }
 
     beta_cov_all = cov_beta/(length(unique(background_data[,background_data_id])) - 1)
+    for (l_id in 1:l){
+      if (! LaplacesDemon::is.positive.definite(beta_cov_all[,,l_id])){
+        beta_cov_all[,,l_id] <- as.matrix(Matrix::nearPD(beta_cov_all[,,l_id])$mat)
+      }
+    }
     W_hat <- S_w/length(unique(background_data[,background_data_id]))
     U_hat <- W_hat * (nw_hat - p - 1)
 
