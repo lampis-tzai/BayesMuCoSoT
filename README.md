@@ -3,6 +3,9 @@ R library for Bayesian multivariate common source testing
 
 Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for common source testing. This library can help you to test if two multivariate distribution comes from the same source based on logarithmic Bayes factor. 
 
+
+## Documentation
+
 ## Installation
 ```
 #install.packages("devtools")
@@ -65,8 +68,6 @@ background_data_id = 'id'
 y = names(questioned_data)[1:2]
 BayesMuCoSoT_fit(y,x=NA,questioned_data,known_data,background_data,background_data_id)
 ```
-
-## Documentation
 
 
 ## References
