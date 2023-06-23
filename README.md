@@ -6,7 +6,7 @@ Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for commo
 
 ## Documentation
 
-[Site]([https://github.com/user/repo/blob/branch/other_file.md](https://lampis-tzai.github.io/BayesMuCoSoT/))
+[Library Site](https://lampis-tzai.github.io/BayesMuCoSoT/)
 
 
 ## Installation
