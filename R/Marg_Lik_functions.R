@@ -2,6 +2,7 @@
 #'
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
 #' @return the logarithmic marginal likelihood
+#' @import CholWishart
 #' @export
 marginal_likelihood_conjugate<- function(jags_data){
 
@@ -37,6 +38,7 @@ marginal_likelihood_conjugate<- function(jags_data){
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
 #' @return the logarithmic marginal likelihood
+#' @import CholWishart LaplacesDemon
 #' @export
 marginal_likelihood_laplace_metr <- function(samples, jags_data){
 
@@ -96,6 +98,7 @@ marginal_likelihood_laplace_metr <- function(samples, jags_data){
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
 #' @return the logarithmic marginal likelihood
+#' @import abind CholWishart LaplacesDemon
 #' @export
 ml_generalized_harmonic_mean <- function(samples, jags_data) {
 
@@ -195,6 +198,7 @@ ml_generalized_harmonic_mean <- function(samples, jags_data) {
 #' @param samples samples of jags output (output$BUGSoutput$sims.matrix).
 #' @param jags_data list of the names of the data objects used by the model (like jags data).
 #' @return the logarithmic marginal likelihood
+#' @import abind CholWishart LaplacesDemon
 #' @export
 ml_bridge_sampling <- function(samples, jags_data) {
 
