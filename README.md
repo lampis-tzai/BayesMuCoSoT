@@ -3,6 +3,10 @@ R library for Bayesian multivariate common source testing
 
 Bayesian multivariate normal modelling (family Normal-inverse-Wishart) for common source testing. This library can help you to test if two multivariate distribution comes from the same source based on logarithmic Bayes factor. 
 
+## Depends
+
+Bayesian Software JAGS (Just Another Gibbs Sampler). It is a program for the statistical analysis of Bayesian hierarchical models by Markov Chain Monte Carlo.
+Can be downloaded from [here](https://sourceforge.net/projects/mcmc-jags/) 
 
 ## Documentation
 
