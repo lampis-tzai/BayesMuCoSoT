@@ -25,10 +25,19 @@ devtools::install_github('lampis-tzai/BayesMuCoSoT')
 
 ```
 library(BayesMuCoSoT)
+
 all_data = iris[iris$Species=='setosa',]
+
+#create questioned data
 questioned_data = all_data[1:(nrow(all_data)/2),]
+
+#create known data
 known_data = all_data[(nrow(all_data)/2+1):nrow(all_data),]
+
+#create background data
 background_data = iris[iris$Species!='setosa',]
+
+#test
 background_data_id = 'Species'
 y = names(questioned_data)[1:4]
 BayesMuCoSoT_fit(y, x=NA, questioned_data, known_data, background_data,background_data_id)
