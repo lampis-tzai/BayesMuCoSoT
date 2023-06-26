@@ -28,7 +28,7 @@ library(BayesMuCoSoT)
 
 all_data = iris[iris$Species=='setosa',]
 
-#create questiones data
+#create questioned data
 questioned_data = all_data[1:(nrow(all_data)/2),]
 
 #create known data
