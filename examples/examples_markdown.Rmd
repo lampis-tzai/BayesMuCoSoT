@@ -1,0 +1,174 @@
+---
+title: "Examples markdown"
+author: "Lampis Tzai"
+date: "2023-06-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is an R Markdown document with four examples for the library "BayesMuCoSoT". These examples are going to help you to fully understand the library. It is recommended to read first the theory [here](https://github.com/lampis-tzai/BayesMuCoSoT/). The examples contains:
+
+* Iris same source comparisons between species
+* Iris different source comparisons between species
+* Simulated dataset different source comparisons
+* Kaggle dataset [Students Performance in Exams](https://www.kaggle.com/datasets/spscientist/students-performance-in-exams)
+
+Hence, the hypotheses we are testing are the following:
+
+$$H_p: The\;unknown\;and\;the\;known\;data\; come \;from\; the\; same \;source$$
+$$H_d: The\;unknown\;and\;the\;known\;data\; come \;from\; different \;sources$$
+
+For the all the examples we split the data ourselves. In real case scenarios we do not know the source of questioned materials.
+
+
+### Library import and install
+
+```{r library}
+#install.packages("devtools")
+#devtools::install_github('lampis-tzai/BayesMuCoSoT')
+library(BayesMuCoSoT)
+```
+
+
+### Iris same source comparison
+
+```{r iris_same}
+all_data = iris[iris$Species=='setosa',]
+questioned_data = all_data[1:(nrow(all_data)/2),]
+known_data = all_data[(nrow(all_data)/2+1):nrow(all_data),]
+background_data = iris[iris$Species!='setosa',]
+background_data_id = 'Species'
+y = names(questioned_data)[1:4]
+BayesMuCoSoT_fit(y, x=NA, questioned_data, known_data, background_data,background_data_id)
+```
+
+- We have extreme evidence to support that are from the same species.
+
+### Iris different source comparison
+
+```{r iris_different}
+set.seed(10)
+
+## create questioned data
+questioned_data = iris[iris$Species=='versicolor',]
+split_ind <- sample(seq_len(nrow(questioned_data)), size = floor(0.5 * nrow(questioned_data)))
+background_data1 = questioned_data[-split_ind,]
+questioned_data = questioned_data[split_ind,]
+
+## create known data
+known_data = iris[iris$Species=='virginica',]
+split_ind <- sample(seq_len(nrow(known_data)), size = floor(0.5 * nrow(known_data)))
+background_data2 = known_data[-split_ind,]
+known_data = known_data[split_ind,]
+
+## create background data
+background_data = rbind(iris[iris$Species=='setosa',],
+                        background_data1,
+                        background_data2)
+## Test
+background_data_id = 'Species'
+y = names(questioned_data)[1:4]
+BayesMuCoSoT_fit(y,x=NA,questioned_data,known_data,
+                              background_data,background_data_id)
+```
+
+- We have extreme evidence to support that are from different species.
+
+### Simulated dataset different source comparisons
+
+
+```{r Simulated}
+library(LaplacesDemon) #for sampling for multivariate normal
+
+## create questioned data
+questioned_data = as.data.frame(rmvn(10,rep(0,2),array(c(2,0.5,0.5,2),dim = c(2,2))))
+
+## create known data
+known_data = as.data.frame(rmvn(8,rep(2,2),array(c(2,0.5,0.5,2),dim = c(2,2))))
+
+## create background data
+background_data = as.data.frame(rbind(rmvn(10,rep(0.5,2),array(c(1,0.2,0.2,2),dim = c(2,2))),
+                       rmvn(10,rep(1.5,2),array(c(6,0.3,0.3,4),dim = c(2,2))),
+                       rmvn(10,rep(3,2),array(c(3,0.8,0.8,3),dim = c(2,2)))))
+background_data['id'] = rep(1:3,each=10)
+
+## Test
+background_data_id = 'id'
+y = names(questioned_data)[1:2]
+logBF = BayesMuCoSoT_fit(y,x=NA,questioned_data,known_data,background_data,background_data_id)
+exp(logBF)
+```
+
+- Bare mention for supporting that are from different sources.
+
+
+### Kaggle dataset Students Performance in Exams
+
+```{r kaggle}
+students_df = read.csv('StudentsPerformance.csv')
+head(students_df)
+```
+
+#### Same parental education level test
+
+```{r kaggle_same}
+all_data = students_df[students_df$parental.level.of.education=="master's degree",]
+
+questioned_data = all_data[1:(nrow(all_data)/2),]
+
+known_data = all_data[(nrow(all_data)/2+1):nrow(all_data),]
+
+background_data = students_df[students_df$parental.level.of.education!="master's degree",]
+
+background_data_id = 'parental.level.of.education'
+y = names(students_df)[6:8]
+BayesMuCoSoT_fit(y, x=NA, questioned_data, known_data, background_data,background_data_id)
+```
+
+- We have extreme evidence to support that are from the same parental education level.
+
+#### Different parental education level test
+
+```{r kaggle_different}
+questioned_data = students_df[students_df$parental.level.of.education=="master's degree",]
+
+known_data = students_df[students_df$parental.level.of.education=="high school",]
+
+background_data = students_df[!students_df$parental.level.of.education %in% c("master's degree","high school"),]
+
+background_data_id = 'parental.level.of.education'
+y = names(students_df)[6:8]
+BayesMuCoSoT_fit(y, x=NA, questioned_data, known_data, background_data,background_data_id)
+```
+
+- We have extreme evidence to support that are from different parental education level.
+
+#### Different parental education level test with predictors
+
+```{r kaggle_different_predictors}
+#install.packages("fastDummies")
+library(fastDummies)
+ 
+# Create dummy variable
+students_df <- dummy_cols(students_df,
+                   select_columns = c("race.ethnicity"))
+
+students_df['race.ethnicity_group A'] = 1
+
+questioned_data = students_df[students_df$parental.level.of.education=="master's degree",]
+
+known_data = students_df[students_df$parental.level.of.education=="high school",]
+
+background_data = students_df[!students_df$parental.level.of.education %in% c("master's degree","high school"),]
+
+background_data_id = 'parental.level.of.education'
+y = names(students_df)[6:8]
+x = names(students_df)[9:13]
+BayesMuCoSoT_fit(y, x, questioned_data, known_data, background_data,background_data_id)
+```
+
+
+- We have very strong evidence to support that are from different parental education level.
