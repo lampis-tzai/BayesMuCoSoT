@@ -1,0 +1,119 @@
+---
+title: "Theory"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Theory}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+This library aims to help you to test if two multivariate data comes from the same source or different sources. Otherwise, more usually we know the source of one data-set and we want to test if another unknown source data-set comes from the same source or different sources. Namely, the hypotheses we are testing are the following:
+
+
+$$H_p: The\;unknown\;and\;the\;known\;data\; come \;from\; the\; same \;source$$
+
+$$H_d: The\;unknown\;and\;the\;known\;data\; come \;from\; different \;sources$$
+
+The hypotheses assessed by means of the Bayes factor, which can be interpreted as a measure of the strength of support provided by the evidence in favor of the hypothesis $H_p$ against the hypothesis $H_d$ and mathematically is expressed based on the odds form of Bayes Theorem:
+
+$$
+     \underbrace{\frac{P(H_p|\pmb{x},\pmb{I})}{P(H_d|\pmb{x},\pmb{I})}}_{\text{Posterior Odds}}=\underbrace{\frac{P(\pmb{x}|H_p,\pmb{I})}{P(\pmb{x}|H_d,\pmb{I})}}_{\text{Bayes Factor}} \times \underbrace{\frac{P(H_p|\pmb{I})}{P(H_d|\pmb{I})}}_{\text{Prior Odds}}
+$$
+
+where $\pmb{x}$ is the realization of the data and $\pmb{I}$ is the relevant background information common to both propositions. 
+
+
+In this tutorial article we present the data modeling, prior elicitation and the estimations of the marginal likelihood in order to measure the Bayes factor.
+
+
+## Bayesian Modelling 
+
+First of all we assume that the data with observations $j$ of every source $i$ are following Multivariate Normal distribution $N_p( \pmb{\theta}_i,\pmb{W}_i)$ with unknown parameters, $\pmb{\theta}_i$ the mean and $\pmb{W}_i$ the covariance matrix, or in case with predictors $N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)$ where the $\pmb{C}_i$ be the predictors with shape n $\times$ L and $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p). We analyze two main Bayesian approaches of data modeling: 
+
+* Conjugate analysis.
+* Independent prior modelling (including between sources variability)
+
+We are going to present only the modelling with predictors (Bayesian Multivariate Regression). Without predictors the matrix $\pmb{C}_i$ is a vector with all values equal to 1.
+
+### Conjugate analysis
+
+In conjugate approach the combined modelling of data can be described as:
+
+
+$$\pmb{x}_{i,j} \sim N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)\\
+    \pmb{\Theta}_i|\pmb{W}_i \sim MN_{l,p}( \pmb{M},\pmb{K}_0^{-1},\pmb{W}_i)\\
+    \pmb{W}_i \sim IW(\pmb{U},\nu)\\
+    $$ 
+    
+
+where $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p), $\pmb{W}_i$ is the non-constant within-source covariance matrix, $\nu$ the degrees of freedom,$\pmb{U}$ the scale matrix of the inverse-Wishart distribution,  $\pmb{M}$ is the prior matrix mean (L$\times$p) and $\pmb{K}_0$ the matrix of prior measurements (L$\times$L) on the W scale, in the way that $vec(\pmb{\Theta}_i) \sim N_{l\times p}(vec(\pmb{M}),\pmb{W}_i \otimes \pmb{K}_0^{-1})$. The natural conjugate prior using the vectorized variable $\pmb{\Theta}_i$ is of the form:
+
+$$
+    \pmb{W}_i \sim IW(\pmb{U},\nu)\\
+    vec(\pmb{\Theta}_i)|\pmb{W}_i \sim N_{l\times p}(vec(\pmb{M}),\pmb{W}_i \otimes \pmb{K}_0^{-1}))\\$$
+
+Using the above prior and likelihood, the posterior distribution can be expressed as a result of the same family. Hence, the marginal likelihood $m(\pmb{x})$ can be expressed in close form:
+
+$$
+m(\pmb{x}) = \frac{1}{2\pi^{np/2}}\frac{\Gamma_p(\nu_n/2)}{\Gamma_p(\nu_0/2)}\frac{|\pmb{U}/2|^{\nu/2}}{|\pmb{U}_n/2|^{\nu_n/2}}\left(\frac{|\pmb{K}_0|}{|\pmb{K}_n|}\right)^{p/2}
+$$
+
+where $n$ the sample size, $p$ the number of variables,  $\Gamma_p$ the multivariate gamma function, $\nu_n = \nu + n$, $\pmb{K}_n = \pmb{C}^T\pmb{C}+\pmb{K}_0$, $\pmb{U}_n = \pmb{U} + \pmb{x}^T\pmb{x} + \pmb{M}^T\pmb{K}_0\pmb{M} - \pmb{M}_n^T\pmb{K}_n\pmb{M}_n$ and $\pmb{M}_n = \pmb{K}_n^{-1}\left( \pmb{C}^T\pmb{x} + \pmb{K}_0\pmb{M}\right)$.
+
+### Independent prior modelling
+
+By including between sources variability, the data can be modeled in the following way:
+
+
+$$    \pmb{x}_{i,j} \sim N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)\\
+    for\;l\;in\;(1,\dots,L)\\
+    \pmb{\theta}_{il} \sim N_p( \pmb{\mu}_l,\pmb{B}_l)\\
+    \pmb{W}_i \sim IW(\pmb{U},\nu)\\$$
+
+
+where for the i-th source the $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p), $\pmb{C}_i$ is the predictors matrix as described before with shape n $\times$ L, $\pmb{W}_{i}$ is the non-constant within-writer covariance matrix, $\pmb{\theta}_l$ is the model coefficient vector of the 'l' predictor, $\pmb{\mu}_l$ is the mean vector of the 'l' predictor between sources and $\pmb{B}_l$ is the between-sources covariance matrix of the 'l' predictor.
+
+The marginal likelihood of this model has no analytical form. Hence, for the calculation of the marginal likelihood is needed the posterior probability distribution of the model for all the approaches in Section $\pmb{Marginal\;Likelihood\;estimations}$. Thus, for extracting sample from the posterior probability distribution it was applied Gibbs sampling by utilizing the implementation of rjags.
+
+
+## Prior Elicitation
+
+For the Bayesian modelling the prior parameters can be elicited from the background data-set with $H$ available different sources and are notated as $\pmb{x}_b$ and $\pmb{C}_b$.
+
+$$ \pmb{M} = (\pmb{C}_b^{T}\pmb{C}_b)^{-1}\pmb{C}_b^{T}\pmb{x}_b$$
+
+$$ \pmb{B}_{p \times p,l}  = \frac{1}{H-1}\sum_{h=1}^H  (\pmb{M}_h - \pmb{M})(\pmb{M}_h - \pmb{M})^T$$
+
+The $\pmb{U}$ and $\nu$ parameters of the inverse Wishart distribution that describe the within-source variation can be elicited by
+
+$$\hat{\pmb{U}} = E[\pmb{W}_i](\nu-p-1)$$
+
+
+
+$$ E[\pmb{W}] = \hat{\pmb{W}}_{p \times p}  = \frac{1}{H-1}\sum_{h=1}^H  \frac{1}{n_h}(\pmb{x}_b - \pmb{C}_bM_h)(\pmb{x}_b - \pmb{C}_bM_h)^T$$
+The smallest value for $\nu$ is given by 
+$$\nu \geq p+2$$
+
+The default value of the library.
+    
+
+
+## Marginal Likelihood estimations
+
+As we mentioned above for the independent prior approach the marginal likelihood is not known form. Hence, it is estimated by using three different marginal likelihood approaches:
+
+1. Generalized harmonic mean (Gelfand & Dey (1994))
+2. Laplace-Metropolis (Lewis & Raftery (1997))
+3. Bridge Sampling (Meng & Wong (1996))
+
+
+For more details see the paper.
+
