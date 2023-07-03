@@ -14,7 +14,7 @@ Can be downloaded from [here](https://sourceforge.net/projects/mcmc-jags/)
 
 [Library Site](https://lampis-tzai.github.io/BayesMuCoSoT/)
 
-[Examples Markdown]()
+[Examples Markdown](https://lampis-tzai.github.io/BayesMuCoSoT/articles/examples_markdown.html)
 
 ## Installation
 ```
