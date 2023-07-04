@@ -16,7 +16,8 @@
 #' @param prior_elicitation "Non-Informative" or "Maximum Likelihood"
 #' or list of type list(U= the inverse Wishart's scale matrix p by p,
 #' beta_mu= matrix mean of the matrix Normal d by p,
-#' beta_cov= d covariances matrix (3D matrix p by p by d).
+#' beta_cov= d covariances matrix (3D matrix p by p by d) or
+#' in case of conjugate approach beta_cov = prior measurements on the W scale matrix d by d.
 #' Default "Maximum Likelihood" estimations from the Background data.
 #' @param DoF Degrees of freedom for the prior inverse Wishart distribution.
 #' Default "min": p+2. Otherwise, integer bigger than p+2.

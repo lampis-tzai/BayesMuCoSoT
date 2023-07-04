@@ -36,7 +36,7 @@ In this tutorial article we present the data modeling, prior elicitation and the
 
 ## Bayesian Modelling 
 
-First of all we assume that the data with observations $j$ of every source $i$ are following Multivariate Normal distribution $N_p( \pmb{\theta}_i,\pmb{W}_i)$ with unknown parameters, $\pmb{\theta}_i$ the mean and $\pmb{W}_i$ the covariance matrix, or in case with predictors $N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)$ where the $\pmb{C}_i$ be the predictors with shape n $\times$ L and $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p). We analyze two main Bayesian approaches of data modeling: 
+First of all we assume that the data with observations $j$ of every source $i$ are following Multivariate Normal distribution $N_p( \pmb{\theta}_i,\pmb{W}_i)$ with unknown parameters, $\pmb{\theta}_i$ the mean and $\pmb{W}_i$ the covariance matrix, or in case with predictors $N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)$ where the $\pmb{C}_i$ be the predictors with shape n $\times$ d and $\pmb{\Theta}_i$ is the coefficient matrix (d $\times$ p). We analyze two main Bayesian approaches of data modeling: 
 
 * Conjugate analysis.
 * Independent prior modelling (including between sources variability)
@@ -54,7 +54,7 @@ $$\pmb{x}_{i,j} \sim N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)\\
     $$ 
     
 
-where $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p), $\pmb{W}_i$ is the non-constant within-source covariance matrix, $\nu$ the degrees of freedom,$\pmb{U}$ the scale matrix of the inverse-Wishart distribution,  $\pmb{M}$ is the prior matrix mean (L$\times$p) and $\pmb{K}_0$ the matrix of prior measurements (L$\times$L) on the W scale, in the way that $vec(\pmb{\Theta}_i) \sim N_{l\times p}(vec(\pmb{M}),\pmb{W}_i \otimes \pmb{K}_0^{-1})$. The natural conjugate prior using the vectorized variable $\pmb{\Theta}_i$ is of the form:
+where $\pmb{\Theta}_i$ is the coefficient matrix (d $\times$ p), $\pmb{W}_i$ is the non-constant within-source covariance matrix, $\nu$ the degrees of freedom,$\pmb{U}$ the scale matrix of the inverse-Wishart distribution,  $\pmb{M}$ is the prior matrix mean (d$\times$p) and $\pmb{K}_0$ the matrix of prior measurements (d$\times$d) on the W scale, in the way that $vec(\pmb{\Theta}_i) \sim N_{l\times p}(vec(\pmb{M}),\pmb{W}_i \otimes \pmb{K}_0^{-1})$. The natural conjugate prior using the vectorized variable $\pmb{\Theta}_i$ is of the form:
 
 $$
     \pmb{W}_i \sim IW(\pmb{U},\nu)\\
@@ -74,14 +74,14 @@ By including between sources variability, the data can be modeled in the followi
 
 
 $$    \pmb{x}_{i,j} \sim N_p(\pmb{C}_{i,j}\pmb{\Theta}_i,\pmb{W}_i)\\
-    for\;l\;in\;(1,\dots,L)\\
-    \pmb{\theta}_{il} \sim N_p( \pmb{\mu}_l,\pmb{B}_l)\\
+    for\;d\;in\;(1,\dots,D)\\
+    \pmb{\theta}_{id} \sim N_p( \pmb{\mu}_d,\pmb{B}_d)\\
     \pmb{W}_i \sim IW(\pmb{U},\nu)\\$$
 
 
-where for the i-th source the $\pmb{\Theta}_i$ is the coefficient matrix (L $\times$ p), $\pmb{C}_i$ is the predictors matrix as described before with shape n $\times$ L, $\pmb{W}_{i}$ is the non-constant within-writer covariance matrix, $\pmb{\theta}_l$ is the model coefficient vector of the 'l' predictor, $\pmb{\mu}_l$ is the mean vector of the 'l' predictor between sources and $\pmb{B}_l$ is the between-sources covariance matrix of the 'l' predictor.
+where for the i-th source the $\pmb{\Theta}_i$ is the coefficient matrix (d $\times$ p), $\pmb{C}_i$ is the predictors matrix as described before with shape n $\times$ d, $\pmb{W}_{i}$ is the non-constant within-writer covariance matrix, $\pmb{\theta}_d$ is the model coefficient vector of the $'d'$ predictor, $\pmb{\mu}_d$ is the mean vector of the $'d'$ predictor between sources and $\pmb{B}_d$ is the between-sources covariance matrix of the $'d'$ predictor.
 
-The marginal likelihood of this model has no analytical form. Hence, for the calculation of the marginal likelihood is needed the posterior probability distribution of the model for all the approaches in Section $\pmb{Marginal\;Likelihood\;estimations}$. Thus, for extracting sample from the posterior probability distribution it was applied Gibbs sampling by utilizing the implementation of rjags.
+The marginal likelihood of this model has no analytical form. Hence, for the calculation of the marginal likelihood is needed the posterior probability distribution of the model for all the approaches in Section $\pmb{Marginal\;Likelihood\;estimations}$. Thus, for extracting sample from the posterior probability distribution it was applied Gibbs sampling by utilizing the implementation of JAGS.
 
 
 ## Prior Elicitation
@@ -106,6 +106,9 @@ The smallest value for $\nu$ is given by
 $$\nu \geq p+2$$
 
 The default value of the library.
+
+
+For the parameter $\pmb{K}_0$ of the conjugate approach that represent the matrix of prior measurements on the W scale, we expressed as the double value of W scale matrix. Hence, the default estimation in the library is diag(0.5,d,d).
     
 
 

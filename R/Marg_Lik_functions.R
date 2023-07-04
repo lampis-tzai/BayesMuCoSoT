@@ -10,7 +10,11 @@ marginal_likelihood_conjugate<- function(jags_data){
   x = jags_data$x_pred
   m0 = jags_data$beta_mu
   v0 = jags_data$nw
-  k0 = diag(0.5,jags_data$L,jags_data$L)
+
+  if (all(dim(jags_data$beta_cov) == c(jags_data$L,jags_data$L))){
+    k0 = jags_data$beta_cov
+  }else{k0 = diag(0.5,jags_data$L,jags_data$L)}
+
   U0 = jags_data$U
 
 
