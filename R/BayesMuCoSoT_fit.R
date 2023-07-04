@@ -14,9 +14,9 @@
 #' "Generalized Harmonic Mean" or "Bridge Sampling". Default "Bridge Sampling".
 #'  For the conjugate approach the Bayes factor comes in close form.
 #' @param prior_elicitation "Non-Informative" or "Maximum Likelihood"
-#' or list of type list(U= the inverse Wishart's scale matrix p by p,
-#' beta_mu= matrix mean of the matrix Normal d by p,
-#' beta_cov= d covariances matrix (3D matrix p by p by d) or
+#' or list of specific names and type list(U = the inverse Wishart's scale matrix p by p,
+#' beta_mu = matrix mean of the matrix Normal d by p,
+#' beta_cov = d covariances matrix (3D matrix p by p by d) or
 #' in case of conjugate approach beta_cov = prior measurements on the W scale matrix d by d.
 #' Default "Maximum Likelihood" estimations from the Background data.
 #' @param DoF Degrees of freedom for the prior inverse Wishart distribution.
@@ -45,7 +45,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                              DoF = "min", verbose = TRUE, ...){
 
 
-  if (!length(background_data)>1){
+  if (!length(background_data)>1 & is.character(prior_elicitation)){
     prior_elicitation = "Non-Informative"
   } else if (length(background_data)>1 & is.na(background_data_id)){
     print("To use background data for the prior elicitation we need a column id (at least 2 ids)")
@@ -73,8 +73,12 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
   }else {print("DoF must be an integer and bigger than p+1")
         stop()}
 
+  if (!is.character(prior_elicitation)) {
+    U_hat = prior_elicitation$U
+    beta = prior_elicitation$beta_mu
+    beta_cov_all = prior_elicitation$beta_cov
 
-  if (prior_elicitation == "Maximum Likelihood"){
+    }else if (prior_elicitation == "Maximum Likelihood"){
     background_y = as.matrix(background_data[,y])
     background_x = as.matrix(background_data[,x])
 
@@ -114,11 +118,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
     U_hat = diag(5,p)
     beta = array(0,c(l,p))
     beta_cov_all = array(rep(diag(5,p),l), dim =c(p,p,l))
-  } else{
-    U_hat = prior_elicitation$U
-    beta = prior_elicitation$beta_mu
-    beta_cov_all = prior_elicitation$beta_cov
-    }
+  }
 
 
 

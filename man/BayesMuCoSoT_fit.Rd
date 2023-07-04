@@ -42,9 +42,9 @@ Default "independent prior"}
  For the conjugate approach the Bayes factor comes in close form.}
 
 \item{prior_elicitation}{"Non-Informative" or "Maximum Likelihood"
-or list of type list(U= the inverse Wishart's scale matrix p by p,
-beta_mu= matrix mean of the matrix Normal d by p,
-beta_cov= d covariances matrix (3D matrix p by p by d) or
+or list of specific names and type list(U = the inverse Wishart's scale matrix p by p,
+beta_mu = matrix mean of the matrix Normal d by p,
+beta_cov = d covariances matrix (3D matrix p by p by d) or
 in case of conjugate approach beta_cov = prior measurements on the W scale matrix d by d.
 Default "Maximum Likelihood" estimations from the Background data.}
 
