@@ -1,7 +1,7 @@
 #' Bayesian Multivariate Normal Modelling for Common Source Testing
 #'
 #' @param y Vector of response columns names (p=variables).
-#' @param x Predictors columns names (d=predictors). If there are any.
+#' @param x Predictors columns names (d=predictors). If there are any. Including constant (all 1's vector)
 #' @param questioned_data Data frame with the unknown data.
 #' @param known_data Data frame of the known data.
 #' @param background_data Background data frame to estimate the prior parameters.

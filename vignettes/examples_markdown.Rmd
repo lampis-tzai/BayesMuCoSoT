@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This is an R Markdown document with four examples for the library "BayesMuCoSoT". These examples are going to help you to fully understand the library. It is recommended to read first the theory [here](https://github.com/lampis-tzai/BayesMuCoSoT/). The examples contains:
+This is an R Markdown document with four examples for the library "BayesMuCoSoT". These examples are going to help you to fully understand the library. It is recommended to read first the theory [here](https://lampis-tzai.github.io/BayesMuCoSoT/articles/theory.html). The examples contains:
 
 * Iris same source comparisons between species
 * Iris different source comparisons between species
@@ -169,7 +169,8 @@ questioned_data = students_df[students_df$parental.level.of.education=="master's
 
 known_data = students_df[students_df$parental.level.of.education=="high school",]
 
-background_data = students_df[!students_df$parental.level.of.education %in% c("master's degree","high school"),]
+background_data = students_df[!students_df$parental.level.of.education %in% c("master's degree",
+                                                                              "high school"),]
 
 background_data_id = 'parental.level.of.education'
 y = names(students_df)[6:8]
@@ -181,21 +182,25 @@ BayesMuCoSoT_fit(y, x, questioned_data, known_data, background_data,background_d
 - We have very strong evidence to support that are from different parental education level.
 
 
+#### Return JAGS output
+
 ```{r kaggle_different_predictors_jags_output}
-output = BayesMuCoSoT_fit(y, x, questioned_data, known_data, background_data,background_data_id,return_jags_outputs = TRUE)
+output = BayesMuCoSoT_fit(y, x, questioned_data, known_data, 
+                          background_data,background_data_id,
+                          return_jags_outputs = TRUE)
 
 print(output$logbf)
-print(output$posterior_common_model)
-print(output$posterior_questioned_data_model)
-print(output$posterior_known_data_model)
+print(round(output$posterior_common_model$BUGSoutput$summary[,1:7],2))
+print(round(output$posterior_questioned_data_model$BUGSoutput$summary[,1:7],2))
+print(round(output$posterior_known_data_model$BUGSoutput$summary[,1:7],2))
 ```
 
 Finally you can plot the jags outputs
 
-```{r plots1, fig.width=7,fig.height=7}
+```{r plots1, fig.width=8,fig.height=7}
 plot(output$posterior_questioned_data_model)
 ```
 
-```{r plots2, fig.width=7,fig.height=7}
+```{r plots2, fig.width=8,fig.height=7}
 plot(output$posterior_known_data_model)
 ```

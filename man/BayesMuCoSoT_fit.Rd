@@ -23,7 +23,7 @@ BayesMuCoSoT_fit(
 \arguments{
 \item{y}{Vector of response columns names (p=variables).}
 
-\item{x}{Predictors columns names (d=predictors). If there are any.}
+\item{x}{Predictors columns names (d=predictors). If there are any. Including constant (all 1's vector)}
 
 \item{questioned_data}{Data frame with the unknown data.}
 
