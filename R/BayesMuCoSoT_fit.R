@@ -22,6 +22,7 @@
 #' @param DoF Degrees of freedom for the prior inverse Wishart distribution.
 #' Default "min": p+2. Otherwise, integer bigger than p+2.
 #' @param verbose messages while running. Default TRUE.
+#' @param return_jags_outputs default FALSE
 #' @param ... the other arguments of jags {R2jags} function.
 #' @return the logarithmic Bayes factor.
 #' @examples
@@ -42,7 +43,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                              approach = "independent prior",
                              BayesFactor_Approximation = "Bridge Sampling",
                              prior_elicitation = "Maximum Likelihood",
-                             DoF = "min", verbose = TRUE, ...){
+                             DoF = "min", return_jags_outputs = FALSE, verbose = TRUE, ...){
 
 
   if (!length(background_data)>1 & is.character(prior_elicitation)){
@@ -240,7 +241,12 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
 
       laplace_logbf = laplace_lik_H0-laplace_lik_H1_1-laplace_lik_H1_2
 
-      return(laplace_logbf)
+      if(return_jags_outputs) {
+        return(list( logbf = laplace_logbf,
+                     posterior_common_model = samps_H0,
+                     posterior_questioned_data_model = samps_H1_1,
+                     posterior_known_data_model = samps_H1_2))
+        } else {return(laplace_logbf)}
 
     } else if (BayesFactor_Approximation == "Generalized Harmonic Mean"){
       ghm_lik_H0 = ml_generalized_harmonic_mean(samps_H0$BUGSoutput$sims.matrix,
@@ -252,7 +258,13 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
 
       ghm_logbf = ghm_lik_H0-ghm_lik_H1_1-ghm_lik_H1_2
 
-      return(ghm_logbf)
+      if(return_jags_outputs) {
+        return(list( logbf = ghm_logbf,
+                     posterior_common_model = samps_H0,
+                     posterior_questioned_data_model = samps_H1_1,
+                     posterior_known_data_model = samps_H1_2))
+      } else {return(ghm_logbf)}
+
     } else if (BayesFactor_Approximation == "Bridge Sampling"){
 
       bs_lik_H0 = ml_bridge_sampling(samps_H0$BUGSoutput$sims.matrix,
@@ -263,10 +275,17 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
                                        jags_data_H1_2)
 
       bs_logbf = bs_lik_H0-bs_lik_H1_1-bs_lik_H1_2
-      return(bs_logbf)
+
+      if(return_jags_outputs) {
+        return(list( logbf = bs_logbf,
+                     posterior_common_model = samps_H0,
+                     posterior_questioned_data_model = samps_H1_1,
+                     posterior_known_data_model = samps_H1_2))
+      } else {return(bs_logbf)}
+
     } else {
       return("Not right Bayes factor approximation")
-      }
+    }
 
 
   }else if (approach == "conjugate"){
