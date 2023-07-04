@@ -10,9 +10,10 @@ Can be downloaded from [here](https://sourceforge.net/projects/mcmc-jags/)
 
 ## Documentation
 
-[Theory]()
 
 [Library Site](https://lampis-tzai.github.io/BayesMuCoSoT/)
+
+[Theory](https://lampis-tzai.github.io/BayesMuCoSoT/articles/theory.html)
 
 [Examples Markdown](https://lampis-tzai.github.io/BayesMuCoSoT/articles/examples_markdown.html)
 
