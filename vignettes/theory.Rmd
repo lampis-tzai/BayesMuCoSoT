@@ -86,9 +86,9 @@ The marginal likelihood of this model has no analytical form. Hence, for the cal
 
 ## Prior Elicitation
 
-For the Bayesian modelling the prior parameters can be elicited from the background data-set with $H$ available different sources and are notated as $\pmb{x}_b$ and $\pmb{C}_b$.
+For the Bayesian modelling the prior parameters can be elicited from the background data-set with $H$ available different sources and are notated as ${}_b\pmb{x}$ and ${}_b\pmb{C}$.
 
-$$ \pmb{M} = (\pmb{C}_b^{T}\pmb{C}_b)^{-1}\pmb{C}_b^{T}\pmb{x}_b$$
+$$ \pmb{M} = ({}_b\pmb{C}^{T}{}_b\pmb{C})^{-1}{}_b\pmb{C}^{T}{}_b\pmb{x}$$
 
 $$ \pmb{B}_{p \times p,l}  = \frac{1}{H-1}\sum_{h=1}^H  (\pmb{M}_h - \pmb{M})(\pmb{M}_h - \pmb{M})^T$$
 
@@ -98,7 +98,10 @@ $$\hat{\pmb{U}} = E[\pmb{W}_i](\nu-p-1)$$
 
 
 
-$$ E[\pmb{W}] = \hat{\pmb{W}}_{p \times p}  = \frac{1}{H-1}\sum_{h=1}^H  \frac{1}{n_h}(\pmb{x}_b - \pmb{C}_bM_h)(\pmb{x}_b - \pmb{C}_bM_h)^T$$
+$$ E[\pmb{W}] = \hat{\pmb{W}}_{p \times p}  = \frac{1}{n-H}\sum_{h=1}^H \sum_{j=1}^{n_h}({}_b\pmb{x}_{hj} - {}_b\pmb{C}_{hj}M_h)({}_b\pmb{x}_{hj} - {}_b\pmb{C}_{hj}M_h)^T$$
+
+where $n = \sum_{h=1}^H n_h$ total observations. 
+
 The smallest value for $\nu$ is given by 
 $$\nu \geq p+2$$
 
@@ -108,7 +111,7 @@ The default value of the library.
 
 ## Marginal Likelihood estimations
 
-As we mentioned above for the independent prior approach the marginal likelihood is not known form. Hence, it is estimated by using three different marginal likelihood approaches:
+As we mentioned above for the independent prior approach the marginal likelihood is not known in closed form. Hence, it is estimated by using three different marginal likelihood approaches:
 
 1. Generalized harmonic mean (Gelfand & Dey (1994))
 2. Laplace-Metropolis (Lewis & Raftery (1997))

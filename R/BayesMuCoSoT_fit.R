@@ -96,7 +96,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
       }
 
       res = bid_y - bid_x %*% beta_w
-      Cov.this = (t(res) %*% res)/(nrow(df_id)-l)
+      Cov.this = (t(res) %*% res)
       S_w = S_w + Cov.this
     }
 
@@ -106,7 +106,7 @@ BayesMuCoSoT_fit <- function(y, x = NA, questioned_data, known_data,
         beta_cov_all[,,l_id] <- as.matrix(Matrix::nearPD(beta_cov_all[,,l_id])$mat)
       }
     }
-    W_hat <- S_w/length(unique(background_data[,background_data_id]))
+    W_hat <- S_w/(nrow(background_data) - length(unique(background_data[,background_data_id])))
     U_hat <- W_hat * (nw_hat - p - 1)
 
   }else if (prior_elicitation == "Non-Informative"){
