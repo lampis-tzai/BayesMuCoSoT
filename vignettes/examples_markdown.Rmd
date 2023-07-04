@@ -2,11 +2,18 @@
 title: "Examples markdown"
 author: "Lampis Tzai"
 date: "2023-06-26"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples markdown}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, R.options= list(width = 10000)}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
 ```
 
 This is an R Markdown document with four examples for the library "BayesMuCoSoT". These examples are going to help you to fully understand the library. It is recommended to read first the theory [here](https://github.com/lampis-tzai/BayesMuCoSoT/). The examples contains:
@@ -172,3 +179,23 @@ BayesMuCoSoT_fit(y, x, questioned_data, known_data, background_data,background_d
 
 
 - We have very strong evidence to support that are from different parental education level.
+
+
+```{r kaggle_different_predictors_jags_output}
+output = BayesMuCoSoT_fit(y, x, questioned_data, known_data, background_data,background_data_id,return_jags_outputs = TRUE)
+
+print(output$logbf)
+print(output$posterior_common_model)
+print(output$posterior_questioned_data_model)
+print(output$posterior_known_data_model)
+```
+
+Finally you can plot the jags outputs
+
+```{r plots1, fig.width=7,fig.height=7}
+plot(output$posterior_questioned_data_model)
+```
+
+```{r plots2, fig.width=7,fig.height=7}
+plot(output$posterior_known_data_model)
+```

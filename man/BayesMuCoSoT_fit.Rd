@@ -15,6 +15,7 @@ BayesMuCoSoT_fit(
   BayesFactor_Approximation = "Bridge Sampling",
   prior_elicitation = "Maximum Likelihood",
   DoF = "min",
+  return_jags_outputs = FALSE,
   verbose = TRUE,
   ...
 )
@@ -50,6 +51,8 @@ Default "Maximum Likelihood" estimations from the Background data.}
 
 \item{DoF}{Degrees of freedom for the prior inverse Wishart distribution.
 Default "min": p+2. Otherwise, integer bigger than p+2.}
+
+\item{return_jags_outputs}{default FALSE}
 
 \item{verbose}{messages while running. Default TRUE.}
 

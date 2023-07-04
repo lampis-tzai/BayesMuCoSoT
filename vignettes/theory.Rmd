@@ -1,5 +1,7 @@
 ---
 title: "Theory"
+author: "Lampis Tzai"
+date: "2023-06-26"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Theory}
@@ -7,12 +9,14 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r, echo=FALSE, cache=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
+
+
 
 
 This library aims to help you to test if two multivariate data comes from the same source or different sources. Otherwise, more usually we know the source of one data-set and we want to test if another unknown source data-set comes from the same source or different sources. Namely, the hypotheses we are testing are the following:
@@ -114,7 +118,7 @@ For the parameter $\pmb{K}_0$ of the conjugate approach that represent the matri
 
 ## Marginal Likelihood estimations
 
-As we mentioned above for the independent prior approach the marginal likelihood is not known in closed form. Hence, it is estimated by using three different marginal likelihood approaches:
+As we mentioned above for the independent prior approach the marginal likelihood $m(x)$ is not known in closed form. Hence, it is estimated by using three different marginal likelihood $m(x)$ approaches:
 
 1. Generalized harmonic mean (Gelfand & Dey (1994))
 2. Laplace-Metropolis (Lewis & Raftery (1997))
@@ -122,4 +126,20 @@ As we mentioned above for the independent prior approach the marginal likelihood
 
 
 For more details see the paper.
+
+
+
+## Bayes Factor
+
+The calculated Bayes factor is the following:
+
+
+$$BF = \frac{m(x_1,x_2|H_p, I)}{m(x_1,x_2|H_d, I)} = \frac{m(x_1,x_2| I)}{m(x_1|I)m(x_2|I)}$$
+
+* In the numerator we assume dependence between two data sources, common modelling. 
+
+* In the denumerator we assume independence between two data sources, different modelling per data source.
+
+Hence, if the data come from the same source the numerator expected to be bigger than the denumerator. Otherwise, if the data come from different sources the denumerator expected to be bigger than the numerator.
+
 
